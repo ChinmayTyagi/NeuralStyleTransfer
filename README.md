@@ -9,5 +9,4 @@ Research paper: https://arxiv.org/pdf/1508.06576.pdf  <br>
 NST + Tensorflow: https://www.tensorflow.org/tutorials/generative/style_transfer <br>
 Video: https://www.youtube.com/watch?v=KsacnrXPq8M <br>
 NST + Video: https://towardsdatascience.com/real-time-video-neural-style-transfer-9f6f84590832 <br>
-
-
+https://towardsdatascience.com/an-intuitive-understanding-to-neural-style-transfer-e85fd80394be
