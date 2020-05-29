@@ -1,37 +1,37 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import tensorflow as tf
-
-
-# In[2]:
-
-
-import IPython.display as display
 
 import numpy as np
 import PIL.Image
 import time
 import functools
 
+def vgg_layers(layer_names):
+    """ Creates a vgg model that returns a list of intermediate output values."""
+    # Load our model. Load pretrained VGG, trained on imagenet data
+    vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
+    vgg.trainable = False
 
-# In[3]:
+    outputs = [vgg.get_layer(name).output for name in layer_names]
 
+    model = tf.keras.Model([vgg.input], outputs)
+    return model
+
+def gram_matrix(input_tensor):
+    result = tf.linalg.einsum('bijc,bijd->bcd', input_tensor, input_tensor)
+    input_shape = tf.shape(input_tensor)
+    num_locations = tf.cast(input_shape[1]*input_shape[2], tf.float32)
+    return result/(num_locations)
+
+def clip_0_1(image):
+    return tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0)
 
 def tensor_to_image(tensor):
-    tensor = tensor*255
-    tensor = np.array(tensor, dtype=np.uint8)
-    if np.ndim(tensor)>3:
-        assert tensor.shape[0] == 1
-        tensor = tensor[0]
-    return PIL.Image.fromarray(tensor)
-
-
-# In[4]:
-
+        tensor = tensor*255
+        tensor = np.array(tensor, dtype=np.uint8)
+        if np.ndim(tensor)>3:
+            assert tensor.shape[0] == 1
+            tensor = tensor[0]
+        return PIL.Image.fromarray(tensor)
 
 def load_img(path_to_img):
     max_dim = 512
@@ -50,92 +50,10 @@ def load_img(path_to_img):
     return img
 
 
-# Content image
-content_image = load_img('../media/landscape.jpg')
-style_image = load_img('../media/apples.jpg')
-
-# In[7]:
-
-
-x = tf.keras.applications.vgg19.preprocess_input(content_image*255)
-x = tf.image.resize(x, (224, 224))
-vgg = tf.keras.applications.VGG19(include_top=True, weights='imagenet')
-prediction_probabilities = vgg(x)
-prediction_probabilities.shape
-
-
-# In[8]:
-
-
-vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
-
-print()
-for layer in vgg.layers:
-    print(layer.name)
-
-
-# In[9]:
-
-
-#content_layers = ['block5_conv2'] 
-content_layers = ['block5_conv4']
-
-#style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-
-style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
-
-num_content_layers = len(content_layers)
-num_style_layers = len(style_layers)
-
-
-# In[10]:
-
-
-def vgg_layers(layer_names):
-    """ Creates a vgg model that returns a list of intermediate output values."""
-    # Load our model. Load pretrained VGG, trained on imagenet data
-    vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
-    vgg.trainable = False
-
-    outputs = [vgg.get_layer(name).output for name in layer_names]
-
-    model = tf.keras.Model([vgg.input], outputs)
-    return model
-
-
-# In[11]:
-
-
-style_extractor = vgg_layers(style_layers)
-style_outputs = style_extractor(style_image*255)
-
-#Look at the statistics of each layer's output
-for name, output in zip(style_layers, style_outputs):
-    print(name, type(output))
-    print("  shape: ", output.numpy().shape)
-    print("  min: ", output.numpy().min())
-    print("  max: ", output.numpy().max())
-    print("  mean: ", output.numpy().mean())
-    print()
-
-
-# In[12]:
-
-
-def gram_matrix(input_tensor):
-    result = tf.linalg.einsum('bijc,bijd->bcd', input_tensor, input_tensor)
-    input_shape = tf.shape(input_tensor)
-    num_locations = tf.cast(input_shape[1]*input_shape[2], tf.float32)
-    return result/(num_locations)
-
-
-# In[13]:
-
-
 class StyleContentModel(tf.keras.models.Model):
     def __init__(self, style_layers, content_layers):
         super(StyleContentModel, self).__init__()
-        self.vgg =  vgg_layers(style_layers + content_layers)
+        self.vgg = vgg_layers(style_layers + content_layers)
         self.style_layers = style_layers
         self.content_layers = content_layers
         self.num_style_layers = len(style_layers)
@@ -163,140 +81,107 @@ class StyleContentModel(tf.keras.models.Model):
         return {'content':content_dict, 'style':style_dict}
 
 
-# In[14]:
+class NeuralStyleTransfer:
+
+    def __init__(self, content_image_path, style_image_path):
+        self._content_image = load_img(content_image_path)
+        self._style_image = load_img(style_image_path)
+        self._image = tf.Variable(self._content_image)
+
+    def style_content_loss(self, outputs):
+        style_outputs = outputs['style']
+        content_outputs = outputs['content']
+        style_loss = tf.add_n([tf.reduce_mean((style_outputs[name]-self.style_targets[name])**2) 
+                            for name in style_outputs.keys()])
+        style_loss *= self.style_weight / self.num_style_layers
+
+        content_loss = tf.add_n([tf.reduce_mean((content_outputs[name]-self.content_targets[name])**2) 
+                                for name in content_outputs.keys()])
+        content_loss *= self.content_weight / self.num_content_layers
+        loss = style_loss + content_loss
+        return loss
+
+    @tf.function()
+    def train_step(self, image):
+        with tf.GradientTape() as tape:
+            outputs = self.extractor(image)
+            loss = self.style_content_loss(outputs)
+            loss += self.total_variation_weight*tf.image.total_variation(image)
+
+        grad = tape.gradient(loss, image)
+        self.opt.apply_gradients([(grad, image)])
+        image.assign(clip_0_1(image))
+
+    def transfer(self, content_layers, style_layers, style_weight=1e-2, content_weight=1e4, total_variation_weight=30, epochs=10, steps_per_epoch=100, save=True):
+        self.style_weight = style_weight
+        self.content_weight = content_weight
+        self.total_variation_weight = total_variation_weight
+
+        self.opt = tf.optimizers.Adam(learning_rate=0.02, beta_1=0.99, epsilon=1e-1)
+
+        self.num_content_layers = len(content_layers)
+        self.num_style_layers = len(style_layers)
+        self.extractor = StyleContentModel(style_layers, content_layers)
+        self.style_targets = self.extractor(self._style_image)['style']
+        self.content_targets = self.extractor(self._content_image)['content']
+        
+        # Start training
+        import time
+        start = time.time()
+        print('Training for', epochs * steps_per_epoch, 'steps...')
+
+        step = 0
+        for n in range(epochs):
+            for m in range(steps_per_epoch):
+                step += 1
+                self.train_step(self._image)
+            print("Train step: {}".format(step))
+
+        end = time.time()
+        print("Processed in {:.1f} seconds".format(end-start))
+
+        result = tensor_to_image(self._image)
+        if (save):
+           result.save('output-cw_' + str(content_weight) + '-sw_' + str(style_weight) + '-vw_' + str(total_variation_weight) + '.jpg') 
+        return result
 
 
-extractor = StyleContentModel(style_layers, content_layers)
 
-results = extractor(tf.constant(content_image))
-
-print('Styles:')
-for name, output in sorted(results['style'].items()):
-    print("  ", name)
-    print("    shape: ", output.numpy().shape)
-    print("    min: ", output.numpy().min())
-    print("    max: ", output.numpy().max())
-    print("    mean: ", output.numpy().mean())
-    print()
-
-print("Contents:")
-for name, output in sorted(results['content'].items()):
-    print("  ", name)
-    print("    shape: ", output.numpy().shape)
-    print("    min: ", output.numpy().min())
-    print("    max: ", output.numpy().max())
-    print("    mean: ", output.numpy().mean())
+ai = NeuralStyleTransfer('../media/landscape.jpg', '../media/apples.jpg')
+content_layers = ['block5_conv2'] 
+style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
+ai.transfer(content_layers, style_layers)
 
 
-# In[15]:
 
 
-style_targets = extractor(style_image)['style']
-content_targets = extractor(content_image)['content']
 
+# def train_all():
+# 	POSSIBLE_CONTENT_LAYERS = ['block5_conv' + str(x) for x in range(2, 5)]
+# 	POSSIBLE_STYLE_LAYERS = ['block' + str(x) + '_conv1' for x in range(1, 5)]
+# 	print(POSSIBLE_CONTENT_LAYERS)
+# 	print(POSSIBLE_STYLE_LAYERS)
 
-# In[16]:
+# 	import itertools
+# 	CONTENT_LAYER_POOL = []
+# 	for i in range(len(POSSIBLE_CONTENT_LAYERS)):
+# 		CONTENT_LAYER_POOL += list(itertools.combinations(POSSIBLE_CONTENT_LAYERS, i + 1))
 
+# 	STYLE_LAYER_POOL = []
+# 	for i in range(len(POSSIBLE_STYLE_LAYERS)):
+# 		STYLE_LAYER_POOL += list(itertools.combinations(POSSIBLE_STYLE_LAYERS, i + 1))
 
-image = tf.Variable(content_image)
-
-
-# In[17]:
-
-
-def clip_0_1(image):
-    return tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0)
-
-
-# In[18]:
-
-
-opt = tf.optimizers.Adam(learning_rate=0.02, beta_1=0.99, epsilon=1e-1)
-
-
-def style_content_loss(outputs):
-    style_outputs = outputs['style']
-    content_outputs = outputs['content']
-    style_loss = tf.add_n([tf.reduce_mean((style_outputs[name]-style_targets[name])**2) 
-                           for name in style_outputs.keys()])
-    style_loss *= style_weight / num_style_layers
-
-    content_loss = tf.add_n([tf.reduce_mean((content_outputs[name]-content_targets[name])**2) 
-                             for name in content_outputs.keys()])
-    content_loss *= content_weight / num_content_layers
-    loss = style_loss + content_loss
-    return loss
-
-
-# In[21]:
-
-
-@tf.function()
-def train_step(image):
-    with tf.GradientTape() as tape:
-        outputs = extractor(image)
-        loss = style_content_loss(outputs)
-        loss += total_variation_weight*tf.image.total_variation(image)
-
-    grad = tape.gradient(loss, image)
-    opt.apply_gradients([(grad, image)])
-    image.assign(clip_0_1(image))
-
-
-def train(content_layers, style_layers, epochs=10, steps_per_epoch=100):
-    num_content_layers = len(content_layers)
-    num_style_layers = len(style_layers)
-    
-    extractor = StyleContentModel(style_layers, content_layers)
-    
-    style_targets = extractor(style_image)['style']
-    content_targets = extractor(content_image)['content']
-    
-    # Start training
-    import time
-    start = time.time()
-
-    step = 0
-    for n in range(epochs):
-        for m in range(steps_per_epoch):
-            step += 1
-            train_step(image)
-        print("Train step: {}".format(step))
-
-    end = time.time()
-    print("Total time: {:.1f}".format(end-start))
-
-
-style_weight=1e-2
-content_weight=1e4
-total_variation_weight=30
-
-def train_all():
-	POSSIBLE_CONTENT_LAYERS = ['block5_conv' + str(x) for x in range(2, 5)]
-	POSSIBLE_STYLE_LAYERS = ['block' + str(x) + '_conv1' for x in range(1, 5)]
-	print(POSSIBLE_CONTENT_LAYERS)
-	print(POSSIBLE_STYLE_LAYERS)
-
-	import itertools
-	CONTENT_LAYER_POOL = []
-	for i in range(len(POSSIBLE_CONTENT_LAYERS)):
-		CONTENT_LAYER_POOL += list(itertools.combinations(POSSIBLE_CONTENT_LAYERS, i + 1))
-
-	STYLE_LAYER_POOL = []
-	for i in range(len(POSSIBLE_STYLE_LAYERS)):
-		STYLE_LAYER_POOL += list(itertools.combinations(POSSIBLE_STYLE_LAYERS, i + 1))
-
-	for i in range(len(CONTENT_LAYER_POOL)):
-		for j in range(len(STYLE_LAYER_POOL)):
-			print('Training i =', i, '/', len(CONTENT_LAYER_POOL), 'j =', j, '/', len(STYLE_LAYER_POOL))
-			print('Content:', CONTENT_LAYER_POOL[i])
-			print('Style:', STYLE_LAYER_POOL[j])
-			train(CONTENT_LAYER_POOL[i], STYLE_LAYER_POOL[j], epochs=10, steps_per_epoch=50)
-			file_name = 'output-content-' + '-'.join(CONTENT_LAYER_POOL[i]) + '-style-' + '-'.join(STYLE_LAYER_POOL[j])
-			tensor_to_image(image).save(file_name + '.jpg')
+# 	for i in range(len(CONTENT_LAYER_POOL)):
+# 		for j in range(len(STYLE_LAYER_POOL)):
+# 			print('Training i =', i, '/', len(CONTENT_LAYER_POOL), 'j =', j, '/', len(STYLE_LAYER_POOL))
+# 			print('Content:', CONTENT_LAYER_POOL[i])
+# 			print('Style:', STYLE_LAYER_POOL[j])
+# 			train(CONTENT_LAYER_POOL[i], STYLE_LAYER_POOL[j], epochs=10, steps_per_epoch=50)
+# 			file_name = 'output-content-' + '-'.join(CONTENT_LAYER_POOL[i]) + '-style-' + '-'.join(STYLE_LAYER_POOL[j])
+# 			tensor_to_image(image).save(file_name + '.jpg')
 			
 
-train_all()
+# train_all()
 
 
 

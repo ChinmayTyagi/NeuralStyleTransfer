@@ -52,23 +52,7 @@ def load_img(path_to_img):
 
 # Content image
 content_image = load_img('media/landscape.jpg')
-style_image = load_img('media/starry_night.jpg')
-
-# In[7]:
-
-
-x = tf.keras.applications.vgg19.preprocess_input(content_image*255)
-x = tf.image.resize(x, (224, 224))
-vgg = tf.keras.applications.VGG19(include_top=True, weights='imagenet')
-prediction_probabilities = vgg(x)
-prediction_probabilities.shape
-
-
-# In[8]:
-
-
-vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
-
+style_image = load_img('media/oil image.jpg')
 
 def vgg_layers(layer_names):
 	""" Creates a vgg model that returns a list of intermediate output values."""
