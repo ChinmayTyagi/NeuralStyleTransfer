@@ -151,7 +151,7 @@ def process_image(content_path, style_path):
 	ai = NeuralStyleTransfer(content_path, style_path)
 	content_layers = ['block5_conv2']
 	style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-	ai.transfer(content_layers, style_layers, save=True, steps=100, epochs=6)
+	ai.transfer(content_layers, style_layers, save=False, steps=100, epochs=6)
 	
 # Example
-process_image('../media/landscape.jpg', '../media/apples.jpg')
+#process_image('../media/landscape.jpg', '../media/apples.jpg')
