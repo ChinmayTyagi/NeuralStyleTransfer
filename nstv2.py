@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import numpy as np
 from  matplotlib import pyplot as plt
 from skimage.transform import resize
@@ -38,30 +32,6 @@ content = 'landscape.jpg'
 
 style_image = load_image(style)
 content_image = load_image(content)
-
-#show results
-#f, ax = plt.subplots(1,2,figsize=(20,20))
-#ax[0].imshow(style_image[0])
-#ax[0].set_title("Style Image", size = 20)
-#ax[1].imshow(content_image[0])
-#ax[1].set_title("Content Image", size = 20)
-#[ax.axis("off") for ax in f.axes] #Turn axis off
-#plt.show()
-
-#style_image = resize(style_image, content_image.shape) #make style same size as content
-
-
-# In[196]:
-
-
-
-
-
-# # VGG and Some Helper Functions
-
-# In[198]:
-
-
 
 '''Return a tf.model which can be called to get all intermediate layers from given list of layer names'''
 
@@ -106,7 +76,7 @@ def create_layers(image):
 
 
 content_layers_names = ['block5_conv4']
-style_layers_names =  ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
+style_layers_names = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
 
 #Vgg model obj has avg pooling, preset imagenet as training data, and doesn't require top layers.
 vgg = vgg19_model.VGG19(pooling = 'avg', weights='imagenet',include_top=False)
@@ -116,29 +86,6 @@ style_layers_model = vgg_layers(style_layers_names) #style layers obj
 
 target_style_layers = create_layers(style_image)[0]
 target_content_layers = create_layers(content_image)[1]
-
-
-# In[200]:
-
-
-for	 output in target_style_layers:
-
-	print("	   shape: ", output.numpy().shape)
-	print("	   min: ", output.numpy().min())
-	print("	   max: ", output.numpy().max())
-	print("	   mean: ", output.numpy().mean())
-	
-for	 output in target_content_layers:
-	
-	print("	   shape: ", output.numpy().shape)
-	print("	   min: ", output.numpy().min())
-	print("	   max: ", output.numpy().max())
-	print("	   mean: ", output.numpy().mean())
-
-
-# ## Loss Functions
-
-# In[201]:
 
 
 '''given 'current' and 'target' layers, calculate total loss using MSE'''
@@ -152,17 +99,8 @@ def calc_loss(layers, outputs):
 	return total_loss
 
 
-# In[202]:
-
-
-
-# # Gradient Descent and Optimization
-
-# In[204]:
-
-
 #Tensor to image
-id = 0
+id = 200
 def convert_to_image(tensor, title):
 	global id
 	
@@ -181,15 +119,34 @@ def convert_to_image(tensor, title):
 	PIL.Image.fromarray(final[0]).save(file_name)
 
 
+from PIL import Image, ImageDraw, ImageFont
+def save_image_overlay(tensor):
+	global id
+
+	tensor = tensor * 225
+	final = np.array(tensor, dtype=np.uint8)
+
+	# Draw overlay information
+	result_image = Image.new('RGB', (final[0].shape[1], final[0].shape[0]))
+	result_image.paste(Image.fromarray(final[0]))
+	result_image_draw = ImageDraw.Draw(result_image, mode='RGBA')
+	result_image_draw.text((0, 0), 'Style Weight    : ' + str(alpha), fill='white', font=ImageFont.truetype('arial.ttf', 18))
+	result_image_draw.text((0, 20), 'Content Weight  : ' + str(beta), fill='white', font=ImageFont.truetype('arial.ttf', 18))
+	result_image_draw.text((0, 40), 'Variation Weight: ' + str(total_variation_weight), fill='white', font=ImageFont.truetype('arial.ttf', 18))
+
+	# Save image
+	result_image.save('imgs/' + str(id) + '.jpg')
+	id += 1
+
 # In[219]:
 
 
 '''Compute weighted loss function for both style and content'''
 
 #1. How does changing alpha/beta affect image quality?
-alpha = 1e-2
-beta = 1e4
-total_variation_weight=30
+alpha = 1e-1  # Style weight
+beta = 1e6  # Content weight
+total_variation_weight = 5
 
 def style_content_loss(outputs):
 	style_outputs = outputs[0]	 #current style
@@ -246,80 +203,29 @@ def gradient(image):
 	image.assign(tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0))
 
 
-# In[217]:
-
-for i in range(3):
-	gradient(output_image)
-convert_to_image(output_image, "Test Gradient on 3 Iterations")
-
-
-# In[218]:
-
-
-print(output_image)
-
-
-# In[222]:
-
-
 ## with their gram calc
 image = tf.Variable(content_image) #change to variable obj to pass into gradient
 
-epochs = 10 #10 batches
-steps = 20
 
-curr_step = 0
-for i in range(epochs):
-	for j in range(steps):
-		curr_step += 1
-		gradient(image)
-		title = "After " + str(curr_step) + " iterations: "
-	convert_to_image(image, title)
-print("Done")
+def train(epochs=10, steps=100, style_weight=1e-2, content_weight=1e4, variation_weight=30):
+	global alpha, beta, total_variation_weight
 
+	alpha = style_weight
+	beta = content_weight
+	total_variation_weight = variation_weight
 
-# In[212]:
+	curr_step = 0
+	for i in range(epochs):
+		print('Training epoch:', i)
+		for j in range(steps):
+			curr_step += 1
+			gradient(image)
+	save_image_overlay(image)
+	print("Done")
 
-
-## with their gram calc
-image = tf.Variable(content_image) #change to variable obj to pass into gradient
-
-epochs = 10 #10 batches
-steps = 20
-
-curr_step = 0
-for i in range(epochs):
-	for j in range(steps):
-		curr_step += 1
-		gradient(image)
-		title = "After " + str(curr_step) + " iterations: "
-	convert_to_image(image, title)
-print("Done")
-
-
-# 
-# # Epoch Testing
-
-# In[498]:
-
-
-##Run on Starry night
-
-
-epochs = 6 #10 batches
-steps = 100
-
-for i in range(epochs):
-	for j in range(steps):
-		curr_step += 1
-		gradient(image)
-		title = "After " + str(curr_step) + " iterations: "
-	convert_to_image(image, title)
-print("Done")
-
-
-# In[ ]:
-
-
-
-
+# STOPPED AT 2 4 9
+for i in range(2, 7):
+	for j in range(10):
+		for k in range(10):
+			print('Training', i, j, k)
+			train(epochs=6, style_weight=(1 / 10**i), content_weight=(1 * 10**j), variation_weight=k*25)
