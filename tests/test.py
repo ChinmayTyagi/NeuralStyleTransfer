@@ -112,7 +112,7 @@ class NeuralStyleTransfer:
         self.opt.apply_gradients([(grad, image)])
         image.assign(clip_0_1(image))
 
-    def transfer(self, content_layers, style_layers, style_weight=1e-2, content_weight=1e4, total_variation_weight=30, epochs=10, steps_per_epoch=100, save=True):
+    def transfer(self, content_layers, style_layers, style_weight=1e-2, content_weight=1e4, total_variation_weight=30, epochs=10, steps=100, save=True):
         self.style_weight = style_weight
         self.content_weight = content_weight
         self.total_variation_weight = total_variation_weight
@@ -128,11 +128,11 @@ class NeuralStyleTransfer:
         # Start training
         import time
         start = time.time()
-        print('Training for', epochs * steps_per_epoch, 'steps...')
+        print('Training for', epochs * steps, 'steps...')
 
         step = 0
         for n in range(epochs):
-            for m in range(steps_per_epoch):
+            for m in range(steps):
                 step += 1
                 self.train_step(self._image)
             print("Train step: {}".format(step))
@@ -146,44 +146,12 @@ class NeuralStyleTransfer:
         return result
 
 
-
-ai = NeuralStyleTransfer('../media/landscape.jpg', '../media/apples.jpg')
-content_layers = ['block5_conv2'] 
-style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-ai.transfer(content_layers, style_layers)
-
-
-
-
-
-# def train_all():
-# 	POSSIBLE_CONTENT_LAYERS = ['block5_conv' + str(x) for x in range(2, 5)]
-# 	POSSIBLE_STYLE_LAYERS = ['block' + str(x) + '_conv1' for x in range(1, 5)]
-# 	print(POSSIBLE_CONTENT_LAYERS)
-# 	print(POSSIBLE_STYLE_LAYERS)
-
-# 	import itertools
-# 	CONTENT_LAYER_POOL = []
-# 	for i in range(len(POSSIBLE_CONTENT_LAYERS)):
-# 		CONTENT_LAYER_POOL += list(itertools.combinations(POSSIBLE_CONTENT_LAYERS, i + 1))
-
-# 	STYLE_LAYER_POOL = []
-# 	for i in range(len(POSSIBLE_STYLE_LAYERS)):
-# 		STYLE_LAYER_POOL += list(itertools.combinations(POSSIBLE_STYLE_LAYERS, i + 1))
-
-# 	for i in range(len(CONTENT_LAYER_POOL)):
-# 		for j in range(len(STYLE_LAYER_POOL)):
-# 			print('Training i =', i, '/', len(CONTENT_LAYER_POOL), 'j =', j, '/', len(STYLE_LAYER_POOL))
-# 			print('Content:', CONTENT_LAYER_POOL[i])
-# 			print('Style:', STYLE_LAYER_POOL[j])
-# 			train(CONTENT_LAYER_POOL[i], STYLE_LAYER_POOL[j], epochs=10, steps_per_epoch=50)
-# 			file_name = 'output-content-' + '-'.join(CONTENT_LAYER_POOL[i]) + '-style-' + '-'.join(STYLE_LAYER_POOL[j])
-# 			tensor_to_image(image).save(file_name + '.jpg')
-			
-
-# train_all()
-
-
-
-
-
+# Call this for every frame
+def process_image(content_path, style_path):
+	ai = NeuralStyleTransfer(content_path, style_path)
+	content_layers = ['block5_conv2']
+	style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
+	ai.transfer(content_layers, style_layers, save=True, steps=100, epochs=6)
+	
+# Example
+process_image('../media/landscape.jpg', '../media/apples.jpg')
