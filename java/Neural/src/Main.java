@@ -4,7 +4,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("../../media"), new File("../../output"), 100, 50);
+        convert(new File("../../output_frames"), new File("../../output"), 100, 50);
     }
 
     private static void convert(final File sourceDirectory, final File destinationDirectory, final int frameCount, final int chunkSize){
@@ -30,13 +30,13 @@ public class Main {
 
             final StreamReader stdOutput = new StreamReader(process.getInputStream());
             final StreamReader errorOutput = new StreamReader(process.getErrorStream());
-            stdOutput.start();
-            errorOutput.start();
+            stdOutput.start("OUT", true);
+            errorOutput.start("ERR", true);
 
             process.waitFor();
 
-            System.out.println(stdOutput.getOutput());
-            System.out.println(errorOutput.getOutput());
+            //System.out.println(stdOutput.getOutput());
+            //System.out.println(errorOutput.getOutput());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

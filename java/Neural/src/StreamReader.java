@@ -28,13 +28,14 @@ public class StreamReader {
      * Start reading the stream in a new thread. This will keep reading until the end of the stream, or until
      * {@link StreamReader#stop()} is called.
      */
-    public void start(){
+    public void start(final String tag, final boolean live){
         running = true;
         new Thread(() -> {
             try {
                 final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                 String line;
                 while (running && (line = bufferedReader.readLine()) != null){
+                    if (live) System.out.println("[" + tag + "] " + line);
                     stringBuilder.append(line);
                     stringBuilder.append('\n');
                 }
