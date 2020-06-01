@@ -286,8 +286,8 @@ def clear_working_dirs():
 if __name__ == "__main__":
     clear_working_dirs()
     video_info = video_to_frames(get_path())
-    style_dir('output_frames')
-    frames_to_video(video_info)
+    #style_dir('output_frames')
+    #frames_to_video(video_info)
 
     
     
