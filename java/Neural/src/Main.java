@@ -4,7 +4,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("source"), new File("output"), 100, 50);
+        convert(new File("../../media"), new File("../../output"), 100, 50);
     }
 
     private static void convert(final File sourceDirectory, final File destinationDirectory, final int frameCount, final int chunkSize){
