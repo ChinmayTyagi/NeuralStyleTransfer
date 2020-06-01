@@ -4,11 +4,11 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("../../output_frames"), new File("../../output"), 100, 50);
+        convert(new File("../../output_frames_pasta"), new File("../../output"), 0, 299, 60);
     }
 
-    private static void convert(final File sourceDirectory, final File destinationDirectory, final int frameCount, final int chunkSize){
-        for (int i = 0; i < frameCount; i += chunkSize){
+    private static void convert(final File sourceDirectory, final File destinationDirectory, final int startFrameId, final int endFrameId, final int chunkSize){
+        for (int i = startFrameId; i <= endFrameId; i += chunkSize){
             pythonConvert(sourceDirectory, destinationDirectory, i, i + chunkSize);
         }
     }
@@ -34,9 +34,6 @@ public class Main {
             errorOutput.start("ERR", true);
 
             process.waitFor();
-
-            //System.out.println(stdOutput.getOutput());
-            //System.out.println(errorOutput.getOutput());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

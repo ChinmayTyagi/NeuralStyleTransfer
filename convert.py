@@ -33,19 +33,19 @@ def tensor_to_image(tensor):
             tensor = tensor[0]
         return PIL.Image.fromarray(tensor), tensor
 
-def load_img(path_to_img):
-    max_dim = 512
+def load_img(path_to_img, resize=False):
     img = tf.io.read_file(path_to_img)
     img = tf.image.decode_image(img, channels=3)
     img = tf.image.convert_image_dtype(img, tf.float32)
 
-    shape = tf.cast(tf.shape(img)[:-1], tf.float32)
-    long_dim = max(shape)
-    scale = max_dim / long_dim
-
-    new_shape = tf.cast(shape * scale, tf.int32)
-
-    img = tf.image.resize(img, new_shape)
+    if resize:
+        max_dim = 1280
+        shape = tf.cast(tf.shape(img)[:-1], tf.float32)
+        long_dim = max(shape)
+        scale = max_dim / long_dim
+        new_shape = tf.cast(shape * scale, tf.int32)
+        img = tf.image.resize(img, new_shape)
+        
     img = img[tf.newaxis, :]
     return img
 
@@ -151,7 +151,7 @@ def process_image(content_path, style_path):
     ai = NeuralStyleTransfer(content_path, style_path)
     content_layers = ['block5_conv2']
     style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-    return ai.transfer(content_layers, style_layers, save=False, steps=20, epochs=1)
+    return ai.transfer(content_layers, style_layers, save=False, steps=100, epochs=4)
     
 
 #####################################################################################################################################################################
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     files = [f for f in os.listdir(src_dir) if os.path.isfile(os.path.join(src_dir, f))] 
     files.sort(key = lambda x: int(x[5:-4]))
 
-    for i in range(start_frame_id, end_frame_id):
+    for i in range(start_frame_id, min(len(files), end_frame_id)):
         file = os.path.join(src_dir, files[i])
         print('Processing', i, file, flush=True)
 
