@@ -1,4 +1,20 @@
+
 import tensorflow as tf
+#####################################################################################################################################################################
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
+
+#####################################################################################################################################################################
 
 import numpy as np
 import PIL.Image
@@ -151,7 +167,7 @@ def process_image(content_path, style_path):
     ai = NeuralStyleTransfer(content_path, style_path)
     content_layers = ['block5_conv2']
     style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-    return ai.transfer(content_layers, style_layers, save=False, steps=20, epochs=1)
+    return ai.transfer(content_layers, style_layers, save=False, steps=10, epochs=1)
     
 
 #####################################################################################################################################################################
@@ -194,6 +210,7 @@ def video_to_frames(file_path):
         cv2.imwrite(name, frame) 
         currentframe += 1
         ret, frame = vid.read()
+        #
 
     fps = 0
     (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
@@ -222,8 +239,8 @@ def frames_to_video(video_info):
         filename = dir_path + files[i]
         
         
-        frame = process_image(filename, 'media/apples.jpg')[0]
-        frame.save(filename)
+        #frame = process_image(filename, 'media/apples.jpg')[0]
+        #frame.save(filename)
         
         
         
@@ -239,9 +256,24 @@ def frames_to_video(video_info):
 
     print(f"Writing final video to '{video_info.name}_stylized.mp4'...")
     for f in files:
-        frame = cv2.imread(f)
+        path = dir_path + f
+        #print('SAVING:', path)
+        frame = cv2.imread(path)
         out.write(frame)
     out.release()
+
+
+def style_dir(directory):
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))] 
+    files.sort(key = lambda x: int(x[5:-4]))
+    for i, file in enumerate(files):
+        print('Processing frame', i)
+        file_name = directory + '/' + file
+        frame = process_image(file_name, 'media/apples.jpg')[0]
+        frame.save(file_name)
+        if i == 100:
+            break
+
 
 def clear_working_dirs():
     print("Clearing directory 'output_frames'... ")
@@ -251,10 +283,10 @@ def clear_working_dirs():
     
 #####################################################################################################################################################################
 
-
 if __name__ == "__main__":
     clear_working_dirs()
     video_info = video_to_frames(get_path())
+    style_dir('output_frames')
     frames_to_video(video_info)
 
     
