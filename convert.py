@@ -5,25 +5,28 @@ import PIL.Image
 import time
 import functools
 
-def vgg_layers(layer_names):
-    """ Creates a vgg model that returns a list of intermediate output values."""
-    # Load our model. Load pretrained VGG, trained on imagenet data
-    vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
-    vgg.trainable = False
 
-    outputs = [vgg.get_layer(name).output for name in layer_names]
+def vgg_layers(total_layers):
+	vgg = tf.keras.applications.VGG19(pooling = 'avg',include_top=False, weights='imagenet') #Create VGG Object
+	vgg.trainable = False
+	layers_list = [vgg.get_layer(name).output for name in total_layers] #Get all layers of given layer names
+	feat_extraction_model = tf.keras.Model([vgg.input], outputs = layers_list)	#Create Object given input layers
 
-    model = tf.keras.Model([vgg.input], outputs)
-    return model
+	return feat_extraction_model
 
-def gram_matrix(input_tensor):
-    result = tf.linalg.einsum('bijc,bijd->bcd', input_tensor, input_tensor)
-    input_shape = tf.shape(input_tensor)
-    num_locations = tf.cast(input_shape[1]*input_shape[2], tf.float32)
-    return result/(num_locations)
+
+def calc_gram_matrix(layer):
+	result = tf.linalg.einsum('bijc,bijd->bcd', layer, layer)
+	input_shape = tf.shape(layer) #get various features
+	h_and_w = input_shape[1] * input_shape[2]
+	 
+	num_locations = tf.cast(h_and_w, tf.float32)
+	return result/(num_locations)
+
 
 def clip_0_1(image):
     return tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0)
+
 
 def tensor_to_image(tensor):
         tensor = tensor*255
@@ -33,13 +36,14 @@ def tensor_to_image(tensor):
             tensor = tensor[0]
         return PIL.Image.fromarray(tensor), tensor
 
+
 def load_img(path_to_img, resize=False):
     img = tf.io.read_file(path_to_img)
     img = tf.image.decode_image(img, channels=3)
     img = tf.image.convert_image_dtype(img, tf.float32)
 
     if resize:
-        max_dim = 1280
+        max_dim = 720
         shape = tf.cast(tf.shape(img)[:-1], tf.float32)
         long_dim = max(shape)
         scale = max_dim / long_dim
@@ -180,5 +184,5 @@ if __name__ == "__main__":
         file = os.path.join(src_dir, files[i])
         print('Processing', i, file, flush=True)
 
-        frame = process_image(file, '../../media/apples.jpg')[0]
+        frame = process_image(file, '../../media/scream.jpg')[0]
         frame.save(os.path.join(dst_dir, files[i]))

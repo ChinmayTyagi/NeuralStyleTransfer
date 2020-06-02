@@ -51,8 +51,8 @@ def load_img(path_to_img):
 
 
 # Content image
-content_image = load_img('media/landscape.jpg')
-style_image = load_img('media/oil image.jpg')
+content_image = load_img('frame0.jpg')
+style_image = load_img('media/apples.jpg')
 
 def vgg_layers(layer_names):
 	""" Creates a vgg model that returns a list of intermediate output values."""
@@ -191,6 +191,6 @@ style_weight=1e-2
 content_weight=1e4
 total_variation_weight=30
 
-train(['block5_conv2'], ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1'], epochs=10, steps_per_epoch=100)
+train(['block5_conv2'], ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1'], epochs=4, steps_per_epoch=100)
 tensor_to_image(image).save('output-cw_' + str(content_weight) + '-sw_' + str(style_weight) + '-vw_' + str(total_variation_weight) + '.jpg')
 

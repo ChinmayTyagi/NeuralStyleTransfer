@@ -4,12 +4,12 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("../../output_frames_pasta"), new File("../../output"), 0, 299, 60);
+        convert(new File("../../output_frames_robin"), new File("../../processed_frames"), 45, 59, 10);
     }
 
     private static void convert(final File sourceDirectory, final File destinationDirectory, final int startFrameId, final int endFrameId, final int chunkSize){
         for (int i = startFrameId; i <= endFrameId; i += chunkSize){
-            pythonConvert(sourceDirectory, destinationDirectory, i, i + chunkSize);
+            pythonConvert(sourceDirectory, destinationDirectory, i, Math.min(i + chunkSize, endFrameId + 1));
         }
     }
 
