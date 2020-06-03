@@ -80,17 +80,13 @@ def calc_loss(layers, outputs):
 	return total_loss
 
 
-from PIL import Image, ImageDraw, ImageFont
-def save_image_overlay(tensor):
-	global id
-
-	tensor = tensor * 225
-	final = np.array(tensor, dtype=np.uint8)
-
-	# Draw overlay information
-	PIL.Image.fromarray(final[0]).save('image.jpg')
-
-# In[219]:
+def tensor_to_image(tensor):
+	tensor = tensor*255
+	tensor = np.array(tensor, dtype=np.uint8)
+	if np.ndim(tensor)>3:
+		assert tensor.shape[0] == 1
+		tensor = tensor[0]
+	return PIL.Image.fromarray(tensor), tensor
 
 
 '''Compute weighted loss function for both style and content'''
@@ -148,27 +144,6 @@ def gradient(image):
 	image.assign(tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0))
 
 
-style = 'media/scream.jpg'
-content = 'output_frames_robin/frame0.jpg'
-
-style_image = load_image(style)
-content_image = load_image(content)
-
-content_layers_names = ['block5_conv4']
-style_layers_names = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
-
-content_layers_model = vgg_layers(content_layers_names) #content layers obj
-style_layers_model = vgg_layers(style_layers_names) #style layers obj
-
-target_style_layers = create_layers(style_image)[0]
-target_content_layers = create_layers(content_image)[1]
-
-opt = tf.optimizers.Adam(learning_rate=0.02, beta_1=0.99, epsilon=1e-1)	 
-
-## with their gram calc
-image = tf.Variable(content_image) #change to variable obj to pass into gradient
-
-
 def train(epochs=10, steps=100, style_weight=1e-2, content_weight=1e4, variation_weight=30):
 	global alpha, beta, total_variation_weight
 
@@ -182,7 +157,69 @@ def train(epochs=10, steps=100, style_weight=1e-2, content_weight=1e4, variation
 		for j in range(steps):
 			curr_step += 1
 			gradient(image)
-	save_image_overlay(image)
 	print("Done")
 
-train(epochs=4)
+
+
+opt = tf.optimizers.Adam(learning_rate=0.02, beta_1=0.99, epsilon=1e-1)	 
+
+# Call this for every frame
+def process_image(content_path, style_path):
+	global style_image, content_image, content_layers_model, style_layers_model, target_style_layers, target_content_layers, image
+	
+	style_image = load_image(style_path)
+	content_image = load_image(content_path)
+
+	content_layers_names = ['block5_conv4']
+	style_layers_names = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
+
+	content_layers_model = vgg_layers(content_layers_names) #content layers obj
+	style_layers_model = vgg_layers(style_layers_names) #style layers obj
+
+	target_style_layers = create_layers(style_image)[0]
+	target_content_layers = create_layers(content_image)[1]
+
+	## with their gram calc
+	image = tf.Variable(content_image) #change to variable obj to pass into gradient
+	
+	train(epochs=4)
+	
+	return tensor_to_image(image)
+	
+	#ai = NeuralStyleTransfer(content_path, style_path)
+	#content_layers_names = ['block5_conv4']
+	#style_layers_names = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1']
+	#content_layers = ['block5_conv2']
+	#style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
+	#return ai.transfer(content_layers_names, style_layers_names, save=False, steps=100, epochs=4)
+	
+
+#####################################################################################################################################################################
+
+import sys
+import os
+
+if __name__ == "__main__":
+	src_dir = sys.argv[1]
+	dst_dir = sys.argv[2]
+	start_frame_id = int(sys.argv[3])
+	end_frame_id = int(sys.argv[4])
+	
+	print('src:', src_dir)
+	print('dst:', dst_dir)
+	print('start:', start_frame_id)
+	print('end:', end_frame_id)
+
+	if not os.path.exists(dst_dir):
+		os.makedirs(dst_dir)
+
+	files = [f for f in os.listdir(src_dir) if os.path.isfile(os.path.join(src_dir, f))] 
+	files.sort(key = lambda x: int(x[5:-4]))
+
+	for i in range(start_frame_id, min(len(files), end_frame_id)):
+		file = os.path.join(src_dir, files[i])
+		print('Processing', i, file, flush=True)
+
+		frame = process_image(file, '../../media/scream.jpg')[0]
+		#frame = process_image(file, 'media/scream.jpg')[0]
+		frame.save(os.path.join(dst_dir, files[i]))

@@ -6,22 +6,22 @@ import time
 import functools
 
 
-def vgg_layers(total_layers):
-	vgg = tf.keras.applications.VGG19(pooling = 'avg',include_top=False, weights='imagenet') #Create VGG Object
-	vgg.trainable = False
-	layers_list = [vgg.get_layer(name).output for name in total_layers] #Get all layers of given layer names
-	feat_extraction_model = tf.keras.Model([vgg.input], outputs = layers_list)	#Create Object given input layers
+def vgg_layers(layer_names):
+    """ Creates a vgg model that returns a list of intermediate output values."""
+    # Load our model. Load pretrained VGG, trained on imagenet data
+    vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
+    vgg.trainable = False
 
-	return feat_extraction_model
+    outputs = [vgg.get_layer(name).output for name in layer_names]
 
+    model = tf.keras.Model([vgg.input], outputs)
+    return model
 
-def calc_gram_matrix(layer):
-	result = tf.linalg.einsum('bijc,bijd->bcd', layer, layer)
-	input_shape = tf.shape(layer) #get various features
-	h_and_w = input_shape[1] * input_shape[2]
-	 
-	num_locations = tf.cast(h_and_w, tf.float32)
-	return result/(num_locations)
+def gram_matrix(input_tensor):
+    result = tf.linalg.einsum('bijc,bijd->bcd', input_tensor, input_tensor)
+    input_shape = tf.shape(input_tensor)
+    num_locations = tf.cast(input_shape[1]*input_shape[2], tf.float32)
+    return result/(num_locations)
 
 
 def clip_0_1(image):

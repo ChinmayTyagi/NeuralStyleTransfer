@@ -4,19 +4,19 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("../../output_frames_robin"), new File("../../processed_frames"), 45, 59, 10);
+        convert(new File("../../output_frames_robin"), new File("../../processed_frames"), 0, 300, 10);
     }
 
     private static void convert(final File sourceDirectory, final File destinationDirectory, final int startFrameId, final int endFrameId, final int chunkSize){
         for (int i = startFrameId; i <= endFrameId; i += chunkSize){
-            pythonConvert(sourceDirectory, destinationDirectory, i, Math.min(i + chunkSize, endFrameId + 1));
+            pythonConvert(sourceDirectory, destinationDirectory, i, i + chunkSize);
         }
     }
 
     private static void pythonConvert(final File sourceDirectory, final File destinationDirectory, final int startFrameId, final int endFrameId){
         final String[] command = new String[]{
                 "python",
-                "../../convert.py",
+                "../../convert2.py",
                 sourceDirectory.getPath(),
                 destinationDirectory.getPath(),
                 String.valueOf(startFrameId),

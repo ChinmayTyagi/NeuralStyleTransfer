@@ -2,28 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8b82c630-d6ea-48b8-bf89-3a3866ddf9a6" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../../media/scream.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../pasta_starry.mp4" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame0.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame1.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame10.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame11.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame12.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame13.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame14.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame2.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame3.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame4.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame5.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame6.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame7.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame8.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../processed_frames/frame9.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../convert2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../image.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../convert.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../convert.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Neural/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Neural/Main.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../neural_style_transfer.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../neural_style_transfer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../nstv2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../nstv2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../oil_image.jpg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,21 +100,21 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1649" y="487" key="#com.intellij.ide.util.TreeClassChooserDialog/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1590988675639" />
-    <state width="1234" height="309" key="GridCell.Tab.0.bottom" timestamp="1591135876411">
+    <state width="1234" height="309" key="GridCell.Tab.0.bottom" timestamp="1591143743362">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="1234" height="309" key="GridCell.Tab.0.bottom/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591135876411" />
-    <state width="1234" height="309" key="GridCell.Tab.0.center" timestamp="1591135876410">
+    <state width="1234" height="309" key="GridCell.Tab.0.bottom/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591143743362" />
+    <state width="1234" height="309" key="GridCell.Tab.0.center" timestamp="1591143743362">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="1234" height="309" key="GridCell.Tab.0.center/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591135876410" />
-    <state width="1234" height="309" key="GridCell.Tab.0.left" timestamp="1591135876410">
+    <state width="1234" height="309" key="GridCell.Tab.0.center/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591143743362" />
+    <state width="1234" height="309" key="GridCell.Tab.0.left" timestamp="1591143743362">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="1234" height="309" key="GridCell.Tab.0.left/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591135876410" />
-    <state width="1234" height="309" key="GridCell.Tab.0.right" timestamp="1591135876410">
+    <state width="1234" height="309" key="GridCell.Tab.0.left/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591143743362" />
+    <state width="1234" height="309" key="GridCell.Tab.0.right" timestamp="1591143743362">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="1234" height="309" key="GridCell.Tab.0.right/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591135876410" />
+    <state width="1234" height="309" key="GridCell.Tab.0.right/-1920.174.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1591143743362" />
   </component>
 </project>
