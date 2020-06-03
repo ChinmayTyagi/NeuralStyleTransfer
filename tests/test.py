@@ -31,7 +31,7 @@ def tensor_to_image(tensor):
         if np.ndim(tensor)>3:
             assert tensor.shape[0] == 1
             tensor = tensor[0]
-        return PIL.Image.fromarray(tensor)
+        return PIL.Image.fromarray(tensor), tensor
 
 def load_img(path_to_img):
     max_dim = 512
