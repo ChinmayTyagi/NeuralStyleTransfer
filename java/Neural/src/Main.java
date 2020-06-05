@@ -4,7 +4,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) {
-        convert(new File("../../output_frames_robin"), new File("../../processed_frames"), 158, 600, 10);
+        convert(new File("../../output_frames_jellyfish"), new File("../../processed_frames"), 168, 500, 10);
     }
 
     private static void convert(final File sourceDirectory, final File destinationDirectory, final int startFrameId, final int endFrameId, final int chunkSize){
